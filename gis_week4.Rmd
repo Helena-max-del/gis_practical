@@ -1,37 +1,38 @@
----
-title: "gis_week4"
-output: html_document
-date: "2025-10-21"
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 ```{r}
-print("hello")
-print("gis_week4")
+
+library(sf)
+library(dplyr)
+library(readr)
+library(ggplot2)
+
 ```
 ```{r}
-print("finish")
+# 读取世界地图的 GeoJSON 文件
+world_sf <- st_read("week4homework/World_Countries_(Generalized)_9029012925078512962.geojson")
+colnames(world_sf)
+
+# 读取性别不平等指数数据（包含 2010 和 2019 年的数据）
+gender_data <- read_csv("week4homework/HDR25_Composite_indices_complete_time_series.csv")
 ```
+
+```{r}
+# 创建一个新的列，表示不平等指数的变化
+gender_data <- gender_data %>%
+  mutate(inequality_diff = gii_2019 - gii_2010)
+# 合并空间数据和性别不平等数据
+world_gender <- world_sf %>%
+  left_join(gender_data, by = c("COUNTRY" = "country"))  # 假设 GeoJSON 中国家列为 name
+```
+
+```{r}
+# 绘制性别不平等变化地图
+ggplot(world_gender) +
+  geom_sf(aes(fill = inequality_diff)) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0,
+                       name = "Inequality Change\n(2010 to 2019)") +
+  theme_minimal() +
+  labs(title = "Global Gender Inequality Change (2010–2019)")
+
+```
+
 
